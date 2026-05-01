@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEBY Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --surface2: #f1f0ec;
+    --border: rgba(0,0,0,0.1);
+    --border2: rgba(0,0,0,0.18);
+    --text: #1a1a18;
+    --text2: #6b6a65;
+    --text3: #a09f9a;
+    --green: #1D9E75;
+    --green-bg: #e1f5ee;
+    --red: #c0392b;
+    --red-bg: #fdecea;
+    --accent: #1D9E75;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18;
+      --surface: #242422;
+      --surface2: #2e2e2b;
+      --border: rgba(255,255,255,0.08);
+      --border2: rgba(255,255,255,0.15);
+      --text: #f0efe9;
+      --text2: #9e9d97;
+      --text3: #6b6a65;
+      --green-bg: #0d3326;
+      --red-bg: #3a1515;
+    }
+  }
+
+  body {
+    font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--green); display: flex; align-items: center; justify-content: center;
+  }
+  .logo-icon svg { width: 18px; height: 18px; }
+  .logo-title { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; }
+  .logo-sub { font-size: 12px; color: var(--text2); }
+
+  .status-pill {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--surface2); border-radius: 99px;
+    padding: 5px 12px; font-size: 12px; color: var(--text2);
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+  .dot.warn { background: #e67e22; }
+
+  main { max-width: 900px; margin: 0 auto; padding: 24px 20px; }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+  .card-label { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+  .card-value { font-size: 26px; font-weight: 600; letter-spacing: -0.5px; line-height: 1; margin-bottom: 4px; }
+  .card-sub { font-size: 12px; color: var(--text2); }
+  .pos { color: var(--green); }
+  .neg { color: var(--red); }
+
+  .panel {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    margin-bottom: 16px;
+  }
+
+  .panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .panel-title { font-size: 13px; font-weight: 500; color: var(--text2); }
+
+  .tabs { display: flex; gap: 4px; }
+  .tab {
+    font-size: 12px; padding: 5px 12px;
+    border-radius: 99px; border: 0.5px solid var(--border2);
+    background: transparent; color: var(--text2);
+    cursor: pointer; font-family: inherit; transition: all 0.12s;
+  }
+  .tab:hover { background: var(--surface2); }
+  .tab.active { background: var(--text); color: var(--bg); border-color: transparent; }
+
+  .chart-wrap { position: relative; width: 100%; height: 200px; }
+
+  .legend { display: flex; gap: 16px; margin-bottom: 14px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+  .legend-dot { width: 10px; height: 3px; border-radius: 2px; }
+
+  .form-row {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  }
+  .form-row input {
+    font-size: 14px; padding: 9px 12px;
+    border-radius: 9px; border: 0.5px solid var(--border2);
+    background: var(--surface2); color: var(--text);
+    font-family: inherit; outline: none;
+    transition: border-color 0.12s;
+  }
+  .form-row input:focus { border-color: var(--green); }
+  .form-row input[type="month"] { width: 160px; }
+  .form-row input[type="number"] { width: 120px; }
+  .btn {
+    font-size: 13px; padding: 9px 16px;
+    border-radius: 9px; border: 0.5px solid var(--border2);
+    cursor: pointer; font-family: inherit; font-weight: 500;
+    transition: all 0.12s;
+  }
+  .btn-primary { background: var(--green); color: #fff; border-color: transparent; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-secondary { background: var(--surface2); color: var(--text); }
+  .btn-secondary:hover { background: var(--border2); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    padding: 8px 12px; text-align: left;
+    font-size: 11px; font-weight: 500; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    border-bottom: 0.5px solid var(--border);
+  }
+  td { padding: 10px 12px; border-bottom: 0.5px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+
+  .del-btn {
+    background: none; border: none; color: var(--text3);
+    cursor: pointer; font-size: 14px; padding: 2px 4px;
+    border-radius: 4px; transition: all 0.1s;
+  }
+  .del-btn:hover { background: var(--red-bg); color: var(--red); }
+
+  .empty { text-align: center; padding: 32px; color: var(--text3); font-size: 14px; }
+
+  .refresh-btn {
+    background: none; border: 0.5px solid var(--border2);
+    border-radius: 8px; padding: 5px 10px;
+    color: var(--text2); cursor: pointer; font-size: 12px;
+    font-family: inherit; display: flex; align-items: center; gap: 5px;
+    transition: all 0.12s;
+  }
+  .refresh-btn:hover { background: var(--surface2); }
+
+  .section-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .section-title { font-size: 13px; font-weight: 500; color: var(--text2); }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinning { animation: spin 0.8s linear infinite; display: inline-block; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polyline points="2,13 6,8 10,10 16,4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-title">CEBY Tracker</div>
+      <div class="logo-sub">iShares EUR Ultrashort Bond ESG · EUR Acc</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;">
+    <div style="display:flex;align-items:center;gap:6px;">
+    <span style="font-size:12px;color:var(--text2);">Precio manual:</span>
+    <input type="number" id="manual-price" placeholder="5.50" step="0.01"
+      style="width:80px;font-size:13px;padding:5px 8px;border-radius:8px;border:0.5px solid var(--border2);background:var(--surface2);color:var(--text);font-family:inherit;"
+      onchange="setManualPrice(this.value)" />
+    <span style="font-size:11px;color:var(--text3);">€</span>
+  </div>
+  <button class="refresh-btn" onclick="refreshPrice()">
+      <span id="refresh-icon">↻</span> Actualizar
+    </button>
+    <div class="status-pill">
+      <span class="dot" id="statusDot"></span>
+      <span id="statusText">Conectando...</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="cards">
+    <div class="card">
+      <div class="card-label">Precio CEBY</div>
+      <div class="card-value" id="c-price">—</div>
+      <div class="card-sub" id="c-change">cargando...</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Total invertido</div>
+      <div class="card-value" id="c-invested">—</div>
+      <div class="card-sub" id="c-months">— aportaciones</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Valor actual</div>
+      <div class="card-value" id="c-value">—</div>
+      <div class="card-sub" id="c-pnl">—</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Rentabilidad</div>
+      <div class="card-value" id="c-ret">—</div>
+      <div class="card-sub" id="c-units">— participaciones</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#1D9E75"></div>Valor actual</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#888;opacity:0.5;border-top:2px dashed #888;background:none;width:14px;"></div>Invertido</div>
+      </div>
+      <div class="tabs">
+        <button class="tab active" onclick="setRange('3M',this)">3M</button>
+        <button class="tab" onclick="setRange('6M',this)">6M</button>
+        <button class="tab" onclick="setRange('1Y',this)">1A</button>
+        <button class="tab" onclick="setRange('ALL',this)">Todo</button>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="chart" role="img" aria-label="Evolución del valor de la cartera CEBY">Evolución del valor invertido.</canvas>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-row">
+      <div class="section-title">Añadir aportación</div>
+    </div>
+    <div class="form-row">
+      <input type="month" id="inp-month" />
+      <input type="number" id="inp-amount" placeholder="Importe (€)" min="1" step="1" />
+      <button class="btn btn-primary" onclick="addEntry()">+ Añadir</button>
+      <button class="btn btn-secondary" onclick="addMonthly()">+ 40 € este mes</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-row">
+      <div class="section-title">Historial de aportaciones</div>
+      <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:12px;color:var(--text3)" id="total-label"></span><button class="btn btn-secondary" style="font-size:11px;padding:4px 10px;color:var(--red);border-color:var(--red)" onclick="resetData()">Resetear datos</button></div>
+    </div>
+    <div id="table-container">
+      <div class="empty">Sin aportaciones aún — añade la primera arriba</div>
+    </div>
+  </div>
+</main>
+
+<script>
+const STORAGE_KEY = 'ceby_tracker_v1';
+let currentPrice = null;
+let priceChangeP = 0;
+let entries = [];
+let chart = null;
+let activeRange = 'ALL';
+
+function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); } catch(e){} }
+function load() { try { const s = localStorage.getItem(STORAGE_KEY); if(s) entries = JSON.parse(s); } catch(e){} }
+
+function fmt(n) { return n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function fmtPct(n) { return (n >= 0 ? '+' : '') + n.toFixed(2) + '%'; }
+
+async function fetchPrice() {
+  const dot = document.getElementById('statusDot');
+  const st = document.getElementById('statusText');
+  const icon = document.getElementById('refresh-icon');
+  icon.classList.add('spinning');
+  dot.className = 'dot warn';
+
+  const tickers = ['CEBY.MI', 'CEBY.DE', 'EUES.DE'];
+  for (const ticker of tickers) {
+    try {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=5d`;
+      const r = await fetch(url, { mode: 'cors' });
+      const d = await r.json();
+      const res = d.chart.result[0];
+      const closes = res.indicators.quote[0].close.filter(v => v != null);
+      if (closes.length >= 1) {
+        currentPrice = closes[closes.length - 1];
+        priceChangeP = closes.length >= 2 ? ((closes[closes.length-1] - closes[closes.length-2]) / closes[closes.length-2] * 100) : 0;
+        dot.className = 'dot';
+        st.textContent = 'Actualizado · ' + new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        icon.classList.remove('spinning');
+        return;
+      }
+    } catch(e) {}
+  }
+
+  currentPrice = currentPrice || 5.50;
+  priceChangeP = 0;
+  dot.className = 'dot warn';
+  st.textContent = 'Precio manual · introduce el precio real abajo';
+  icon.classList.remove('spinning');
+}
+
+function setManualPrice(val) {
+  const p = parseFloat(val);
+  if (!p || p <= 0) return;
+  currentPrice = p;
+  priceChangeP = 0;
+  const dot = document.getElementById('statusDot');
+  const st = document.getElementById('statusText');
+  dot.className = 'dot warn';
+  st.textContent = 'Precio introducido manualmente · ' + p.toFixed(2) + ' €';
+  render();
+}
+
+function refreshPrice() { fetchPrice().then(() => render()); }
+
+function updateCards() {
+  if (!currentPrice) return;
+  const p = currentPrice;
+  document.getElementById('c-price').textContent = fmt(p) + ' €';
+  const chEl = document.getElementById('c-change');
+  chEl.textContent = fmtPct(priceChangeP) + ' hoy';
+  chEl.className = 'card-sub ' + (priceChangeP >= 0 ? 'pos' : 'neg');
+
+  const totalInvested = entries.reduce((s, e) => s + e.amount, 0);
+  const totalUnits = entries.reduce((s, e) => s + e.units, 0);
+  const currentValue = totalUnits * p;
+  const pnl = currentValue - totalInvested;
+  const retPct = totalInvested > 0 ? (pnl / totalInvested * 100) : 0;
+
+  document.getElementById('c-invested').textContent = fmt(totalInvested) + ' €';
+  document.getElementById('c-months').textContent = entries.length + ' aportaciones';
+  document.getElementById('c-value').textContent = fmt(currentValue) + ' €';
+  const pnlEl = document.getElementById('c-pnl');
+  pnlEl.textContent = (pnl >= 0 ? '+' : '') + fmt(pnl) + ' €';
+  pnlEl.className = 'card-sub ' + (pnl >= 0 ? 'pos' : 'neg');
+  const retEl = document.getElementById('c-ret');
+  retEl.textContent = fmtPct(retPct);
+  retEl.className = 'card-value ' + (retPct >= 0 ? 'pos' : 'neg');
+  document.getElementById('c-units').textContent = totalUnits.toFixed(4) + ' participaciones';
+  document.getElementById('total-label').textContent = entries.length + ' registros';
+}
+
+function updateTable() {
+  const container = document.getElementById('table-container');
+  if (entries.length === 0) {
+    container.innerHTML = '<div class="empty">Sin aportaciones aún — añade la primera arriba</div>';
+    return;
+  }
+  const sorted = [...entries].sort((a, b) => a.month.localeCompare(b.month));
+  container.innerHTML = `<table>
+    <thead><tr>
+      <th>Mes</th><th>Aportación</th><th>Precio entrada</th>
+      <th>Participaciones</th><th>Valor hoy</th><th>Plusvalía</th><th></th>
+    </tr></thead>
+    <tbody>${sorted.map(e => {
+      const val = currentPrice ? e.units * currentPrice : null;
+      const pnl = val != null ? val - e.amount : null;
+      const idx = entries.findIndex(x => x.month === e.month && x.amount === e.amount && x.entryPrice === e.entryPrice);
+      return `<tr>
+        <td style="font-weight:500">${e.month}</td>
+        <td>${fmt(e.amount)} €</td>
+        <td>${fmt(e.entryPrice)} €</td>
+        <td style="color:var(--text2)">${e.units.toFixed(4)}</td>
+        <td>${val != null ? fmt(val) + ' €' : '—'}</td>
+        <td class="${pnl == null ? '' : pnl >= 0 ? 'pos' : 'neg'}">${pnl == null ? '—' : (pnl >= 0 ? '+' : '') + fmt(pnl) + ' €'}</td>
+        <td><button class="del-btn" onclick="removeEntry(${idx})">✕</button></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+function updateChart() {
+  let sorted = [...entries].sort((a, b) => a.month.localeCompare(b.month));
+  const now = new Date();
+  if (activeRange === '3M') { const cut = new Date(now); cut.setMonth(cut.getMonth()-3); sorted = sorted.filter(e => new Date(e.month+'-01') >= cut); }
+  else if (activeRange === '6M') { const cut = new Date(now); cut.setMonth(cut.getMonth()-6); sorted = sorted.filter(e => new Date(e.month+'-01') >= cut); }
+  else if (activeRange === '1Y') { const cut = new Date(now); cut.setFullYear(cut.getFullYear()-1); sorted = sorted.filter(e => new Date(e.month+'-01') >= cut); }
+
+  const labels = [], investedData = [], valueData = [];
+  let cumInvested = 0, cumUnits = 0;
+  sorted.forEach(e => {
+    cumInvested += e.amount;
+    cumUnits += e.units;
+    labels.push(e.month);
+    investedData.push(parseFloat(cumInvested.toFixed(2)));
+    valueData.push(currentPrice ? parseFloat((cumUnits * currentPrice).toFixed(2)) : null);
+  });
+
+  const ctx = document.getElementById('chart');
+  if (chart) { chart.destroy(); chart = null; }
+  if (labels.length === 0) return;
+
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Invertido',
+          data: investedData,
+          borderColor: 'rgba(136,135,128,0.6)',
+          backgroundColor: 'rgba(136,135,128,0.05)',
+          borderWidth: 1.5, borderDash: [5, 4],
+          pointRadius: 3, pointBackgroundColor: 'rgba(136,135,128,0.6)',
+          fill: true, tension: 0.3
+        },
+        {
+          label: 'Valor actual',
+          data: valueData,
+          borderColor: '#1D9E75',
+          backgroundColor: 'rgba(29,158,117,0.07)',
+          borderWidth: 2,
+          pointRadius: 3, pointBackgroundColor: '#1D9E75',
+          fill: true, tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmt(ctx.raw) + ' €' } }
+      },
+      scales: {
+        x: { ticks: { font: { size: 11 }, color: '#888', autoSkip: true, maxRotation: 0 }, grid: { display: false } },
+        y: { ticks: { font: { size: 11 }, color: '#888', callback: v => fmt(v) + ' €' }, grid: { color: 'rgba(128,128,128,0.08)' } }
+      }
+    }
+  });
+}
+
+function setRange(r, btn) {
+  activeRange = r;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  updateChart();
+}
+
+function addEntry() {
+  const month = document.getElementById('inp-month').value;
+  const amount = parseFloat(document.getElementById('inp-amount').value);
+  if (!month || !amount || amount <= 0) { alert('Introduce un mes e importe válidos.'); return; }
+  const ep = currentPrice || 5.10;
+  entries.push({ month, amount, entryPrice: parseFloat(ep.toFixed(4)), units: parseFloat((amount / ep).toFixed(6)) });
+  save();
+  render();
+  document.getElementById('inp-month').value = '';
+  document.getElementById('inp-amount').value = '';
+}
+
+function addMonthly() {
+  if (!currentPrice) { alert('Esperando precio del mercado...'); return; }
+  const today = new Date();
+  const month = today.toISOString().slice(0, 7);
+  if (entries.find(e => e.month === month)) { alert('Ya hay una aportación registrada este mes.'); return; }
+  entries.push({ month, amount: 10, entryPrice: parseFloat(currentPrice.toFixed(4)), units: parseFloat((40 / currentPrice).toFixed(6)) });
+  save();
+  render();
+}
+
+function resetData() {
+  if (confirm('¿Borrar todas las aportaciones y cargar los datos iniciales?')) {
+    localStorage.removeItem(STORAGE_KEY);
+    entries = [];
+    init();
+  }
+}
+
+function removeEntry(idx) {
+  if (confirm('¿Eliminar esta aportación?')) { entries.splice(idx, 1); save(); render(); }
+}
+
+function render() { updateCards(); updateTable(); updateChart(); }
+
+async function init() {
+  load();
+  if (entries.length === 0) {
+    save();
+  }
+  const today = new Date();
+  document.getElementById('inp-month').value = today.toISOString().slice(0, 7);
+  render();
+  await fetchPrice();
+  render();
+  setInterval(() => { fetchPrice().then(() => render()); }, 60000);
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Cartera · Investment Tracker</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --surface2: #f1f0ec;
+    --border: rgba(0,0,0,0.08);
+    --text: #1a1a18;
+    --text2: #6b6a65;
+    --text3: #a09f9a;
+    --green: #1D9E75;
+    --green-light: #e1f5ee;
+    --green-mid: #9FE1CB;
+    --blue: #185FA5;
+    --blue-light: #E6F1FB;
+    --blue-mid: #B5D4F4;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18;
+      --surface: #242422;
+      --surface2: #2e2e2b;
+      --border: rgba(255,255,255,0.08);
+      --text: #f0efe9;
+      --text2: #9e9d97;
+      --text3: #6b6a65;
+      --green-light: #0d3326;
+      --green-mid: #085041;
+      --blue-light: #042C53;
+      --blue-mid: #0C447C;
+    }
+  }
+
+  body {
+    font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 20px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .logo {
+    width: 56px; height: 56px;
+    background: var(--green);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+  }
+
+  .logo svg { width: 28px; height: 28px; }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    font-size: 15px;
+    color: var(--text2);
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    width: 100%;
+    max-width: 600px;
+    margin-bottom: 40px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    text-decoration: none;
+    color: var(--text);
+    transition: transform 0.15s, box-shadow 0.15s;
+    cursor: pointer;
+    display: block;
+  }
+
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+  }
+
+  .card-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 18px;
+  }
+
+  .card-icon.green { background: var(--green-light); }
+  .card-icon.blue { background: var(--blue-light); }
+
+  .card-icon svg { width: 24px; height: 24px; }
+
+  .card-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 99px;
+    margin-bottom: 10px;
+    letter-spacing: 0.05em;
+  }
+
+  .card-tag.green { background: var(--green-light); color: var(--green); }
+  .card-tag.blue { background: var(--blue-light); color: var(--blue); }
+
+  .card-title {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    margin-bottom: 6px;
+  }
+
+  .card-desc {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 0.5px solid var(--border);
+  }
+
+  .card-meta {
+    font-size: 12px;
+    color: var(--text3);
+  }
+
+  .card-arrow {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+
+  .card-arrow.green { background: var(--green-light); color: var(--green); }
+  .card-arrow.blue { background: var(--blue-light); color: var(--blue); }
+
+  .footer {
+    font-size: 12px;
+    color: var(--text3);
+    text-align: center;
+  }
+
+  .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polyline points="3,20 9,12 15,15 25,6" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="3" y1="24" x2="25" y2="24" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    </svg>
+  </div>
+  <h1>Mi Cartera</h1>
+  <p class="subtitle">Seguimiento de inversiones en tiempo real</p>
+</div>
+
+<div class="cards">
+
+  <a class="card" href="index.html">
+    <div class="card-icon green">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="9" stroke="#1D9E75" stroke-width="1.5"/>
+        <path d="M8 14 L10 10 L13 12 L17 7" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="card-tag green">Renta Variable</div>
+    <div class="card-title">IWDA</div>
+    <div class="card-desc">iShares Core MSCI World UCITS ETF · USD Acc · Renta variable global diversificada</div>
+    <div class="card-footer">
+      <span class="card-meta">40 € / mes</span>
+      <div class="card-arrow green">→</div>
+    </div>
+  </a>
+
+  <a class="card" href="CEBY_Tracker.html">
+    <div class="card-icon blue">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="6" width="18" height="13" rx="2" stroke="#185FA5" stroke-width="1.5"/>
+        <path d="M3 10 L21 10" stroke="#185FA5" stroke-width="1.5"/>
+        <path d="M7 14 L10 14" stroke="#185FA5" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M7 17 L13 17" stroke="#185FA5" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="card-tag blue">Renta Fija</div>
+    <div class="card-title">CEBY</div>
+    <div class="card-desc">iShares EUR Ultrashort Bond ESG UCITS ETF · EUR Acc · Bonos corporativos ESG corto plazo</div>
+    <div class="card-footer">
+      <span class="card-meta">10 € / mes</span>
+      <div class="card-arrow blue">→</div>
+    </div>
+  </a>
+
+</div>
+
+<div class="footer">
+  <span class="dot"></span>
+  Datos actualizados en tiempo real durante horario de mercado
+</div>
+
+</body>
+</html>
